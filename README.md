@@ -326,29 +326,403 @@ CSS:
 ***
 
 ## Mixin (믹스인)
+Mixin은 공통적으로 많이 쓰이는 CSS의 선언값들을 묶어 재사용할 수 있게 만드는 기능입니다.
+`@mixin`로 선언하고 `@include`로 사용합니다.
 
+### @mixin
+@mixin 지시어를 사용하여 스타일을 정의합니다.
+```
+SCSS:
+
+@mixin large-text {
+    font-size: 10px;
+    font-weight: bold;
+    color: black;
+}
+```
+#### @mixin 은 선택자 포함이 가능하여 `&`가 사용 가능합니다.
+```
+SCSS:
+@mixin large-text {
+    font: {
+        size: 10px;
+        weight: bold;
+    }
+    color: orange;
+
+    &::after {
+        content: "..";
+    }
+}
+```
+### @include
+@mixin을 사용하기 위해서는 @include를 사용해야 합니다.
+```
+SCSS:
+h1 {
+    @include large-text;
+}
+div {
+    @include large-text;
+}
+
+CSS:
+h1 {
+    font-size: 10px;
+    font-weight: bold;
+    color: black;
+}
+h1::after {
+    content: "..";
+
+}
+div {
+    font-size: 10px;
+    font-weight: bold;
+    color: black;
+}
+div::after {
+    content: "..";
+}
+
+```
+
+### 매개변수
+mixin은 `함수(funtion)`와 같이 매개변수를 가질 수 있습니다.
+```
+SCSS:
+@mixin dash-line($width, $color) {
+    border: $swidth dashed $color;
+}
+
+.box1 { @include dash-line(1px, red);}
+.box2 { @include dash-line(2px, blue);}
+
+CSS:
+.box1 {
+    border: 1px dashed red;
+}
+.box2 {
+    border: 2px dashed blue;
+}
+```
+
+#### 매개변수 기본값 설정
+매개변수는 기본값을 가질 수 있습니다.
+@include를 사용할 때 별도의 인수를 전달하지 않으면 기본값으로 적용됩니다.
+```
+SCSS:
+@mixin dash-line($width: 1px, $color: red) {
+    border: $swidth dashed $color;
+}
+
+.box1 { @include dash-line;}
+.box2 { @include dash-line(2px, blue);}
+
+CSS:
+.box1 {
+    border: 1px dashed red;
+}
+.box2 {
+    border: 2px dashed blue;
+}
+```
+
+### 키워드 매개변수
+전달 할 매개변수를 키워드로 지정하여 사용할 수 있습니다.   
+@include에서 사용할 때 키워드를 사용하면 매개변수 순서에 상관없이 사용가능합니다.   
+```
+SCSS:
+@mixin positon(
+    $p: absolute,
+    $t: null,
+    $b: null,
+    $l: null,
+    $r: null
+) {
+    positon: $p;
+    top: $t;
+    bottom: $b;
+    left: $l;
+    right: $r;
+}
+
+.absolute {
+    @incude positon($b: 10px, $r: 10px);
+}
+.fixerd {
+    @include position(
+    fixed,
+    $t: 30px,
+    $r: 40px
+    );
+}
+
+CSS:
+.absolute {
+    positon: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+.fixed {
+    positon: fixed;
+    top: 30px;
+    right: 40px;
+}
+```
+
+### 매개변수 리스트
+매개변수의 개수를 알수 없을때는 `arglist`를 사용할 수 있습니다.
+`arglist`는 임의의 수의 매개변수를 mixin이나 함수에 전달할 때 암묵적으로 사용되는 SASS의 데이터 유형이며 `...`로 사용 할 수 있습니다.
+```
+SCSS:
+@mixin shadows($shadows...) {
+
+}
+@include shadows(shadowsA, shadowsB, shadowsC);
+```
+```
+SCSS:
+@mixin bg($width, $height, $bg-values...) {
+    width: $width;
+    height: $height;
+    background: $bg-values;
+}
+
+div {
+    //bg_values는 개수 상관없이 전달
+    @include bg(
+        100px,
+        200px,
+        url("/image/a.png") no-repeat 10px 20px,
+        url("/image/b.png") no-repeat,
+        url("/iamge/c.png")
+    );
+}
+
+CSS:
+div {
+    width: 100px,
+    height: 200px,
+    background: url("/image/a.png") no-repeat 10px 20px,
+                url("/image/b.png") no-repeat,
+                url("/iamge/c.png");
+}
+```
+인수를 전달 할때도 `arglist`를 사용할 수 있습니다.
+```
+SCSS:
+@mixin font(
+    $style: normal,
+    $weight: normal,
+    $size: 16px,
+    $family: sans-serif
+) {
+    font: {
+        style: $style;
+        weight: $weight;
+        size: $size;
+        family: $family;
+    }
+}
+
+div{
+    // 매개변수 순서에 맞게 전달
+    $font-values: italic, bold, 16px, sans-serif;
+    @include font($font-values...);
+}
+span {
+    //필요한 값의 키워드 매개변수를 변수에 담에 전달
+    $font-values: (style: italic, size: 22px);
+    @include font($font-values...);
+}
+a {
+    // 필요한 값만 키워드 매개변수로 전달
+    @include font((weight:900, family: monospace)...);
+}
+
+CSS:
+div {
+    font-style: italic;
+    font-weight: bold;
+    font-size: 16px;
+    font-family: sans-serif;
+}
+span {
+    font-style: italic;
+    font-weight: normal;
+    font-size: 22px;
+    font-family: sans-serif;
+}
+a {
+    font-style: normal;
+    font-weight: 900;
+    font-size: 16px;
+    font-family: monospace;
+}
+```
+
+### @content
+`@content`를 사용하여 `스타일 블록`을 전달 할 수 있습니다.
+이 기능을 사용하여 @mixin에 설정된 선택자나 속성 외에 선택자나 속성을 추가할 수 있습니다.
+```
+SCSS:
+@mixin icon($url) {
+    &::after {
+        content: $url;
+        @content;
+    }
+}
+.icon1 {
+    //기존 mixin의 기능만 사용
+    @include icon("/image/a.png");
+}
+.icon2 {
+    //content를 이용하여 스타일 블록을 추가
+    @include icon("/image/b.png") {
+        position: absolute;
+    }
+}
+
+CSS:
+.icon1::after {
+    content: "/image/a.png";
+}
+.icon2::after {
+    content: "/image/b.png";
+    positon: absolute;
+}
+```
+***
+## Extend (상속)
+SACC는 `@extend`를 통해 모듈식 CSS를 작성할 수 있습니다.
+다만 `@extend`는 득보단 실이 많을 수 있는 까다로운 개념입니다. 해당 기능을 사용하기전에 다음과 같은 문제를 고려해야됩니다.
+- 내 현재 선택자가 어디에 첨부될 것인가?
+- 원치 않은 부작용이 초래될 수도 있는가?
+- 이 한번의 확장으로 얼마나 큰 CSS가 생성되는가?
+
+이점을 고려하면 `@extend`는 유익할 수도 있지만 큰 부작용을 초래할 수도 있습니다.
+그렇기에 `@extend`를 피하고 위의 `@mixin`의 사용을 권장합니다.
+```
+SCSS:
+.btn {
+    padding: 10px;
+    margin: 10px;
+    background: blue;
+}
+.btn-danger {
+    @extend .btn;
+    background: red;
+}
+
+CSS:
+.btn, .btn-danger {
+    padding: 10px;
+    margin: 10px;
+    background: blue;
+}
+.btn-danger {
+    background: red;
+}
+``` 
 ***
 
 ## Import (불러오기)
+`@import`로 외부에서 가져온 SASS파일을 단일 CSS파일로 병합합니다.
+또한 `@import`한 파일에서 정의된 모든 변수와 `@mixin` 등을 사용 가능합니다.
+
+`@import`는 SASS파일을 가져오지만 아래 규칙으로 사용 될 경우 CSS `@import`로 사용됩니다.
+- 파일 확장자가 `.css` 일 경우
+- 파일 이름이 `http://`로 시작하는 경우
+- `url()`을 사용할 경우
+- 미디어쿼리가 있는 경우
+```
+@import "helloworld.css";
+@import "http://helloworld.com";
+@import url(helloworld);
+@import "helloworld" screen;
+```
+
+### 여러 파일을 @import 하기
+하나의 `@import`로 여러 파일을 가져올 수 있습니다.
+`,`로 구분합니다.
+```
+@import "hello", "world";
+```
+
+### 파일 분활
+SASS의 Partials 기능을 사용하여 SASS를 기능별로 세분화하여 나눌 수 있습니다.   
+또한 파일 이름앞에 `_`을 사용하여 @import 가져오면 `_`로 시작하는 파일은 CSS로 컴파일 하지 않습니다.
+
+```
+SCSS 구조 :
+//index.scss @import "header", "footer"
+SCSS
+ |-_header.scss
+ |-_footer.scss
+ `-index.scss
+
+CSS 컴파일:
+CSS
+ `-index.css // index + header + footer
+SCSS
+ |-header.scss
+ |-footer.scss
+ `-index.scss
+```
 
 ***
 
-## Extend (상속)
+## 조건문
+SASS는 @if와 @else를 이용한 조건문을 제공합니다. CSS에서는 조건문이 크게 필요하지 않지만 사용하게 될 경우 다음 수직을 준수해야합니다.
+- 필요한 경우가 아니라면 `괄호( )` 없이
+- `@if` 앞에는 빈 라인
+- `여는 중괄호 {` 뒤에는 줄바꿈
+- `@else` 문은 이전의 `닫는 중괄호 }`와 같은 줄
+- 다음 줄이 `닫는 중괄호 }` 가 아닌 한 마지막 `닫는 중괄호 }` 뒤에는 빈 라인
+```
+@if $support-legacy {
+    // ...
+} @else {
+    // ...
+}
+```
+거짓을 사용할 때는 `false`나 `null` 대신 `not`을 사용하세요.
+```
+// Yep
+@if not index($list, $item) {
+    // ...
+}
+// Nope
+@if index($list, $item) == null {
+    // ...
+}
+```
+조건에 따라 결과를 @return하는 조건문을 사용할 때는 조건문 블록 밖에서도 @return
+```
+// Yep
+@function dummy($condition) {
+    @if $condition {
+        @return true;
+    }
+    @return false;
+}
 
+// Nope
+@function dummy($condition) {
+    @if $condition {
+        @return true;
+    } @else {
+        @return false;
+    }
+}
+```
 ***
-
-
-## Function (함수)
-
-***
-
-## 조건 / 반복문
-
-### if
+## 반복문
 ### for
 ### each
 ### while
-### 
+### 작성 고려
 
 ***
 
@@ -363,61 +737,8 @@ CSS:
 
 ***
 
-
-## Available Scripts
-
-### `yarn start`
-
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
-
-### `yarn test`
-
-Launches the test runner in the interactive watch mode.<br />
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `yarn build`
-
-Builds the app for production to the `build` folder.<br />
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `yarn eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
-
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
 ## Learn More
+[SASS-GUIDELIN](https://sass-guidelin.es/ko/)
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+[SASS(SCSS) 완전 정복!](https://heropy.blog/2018/01/31/sass/)
 
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `yarn build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
