@@ -1,5 +1,13 @@
 # SASS 정리 - 한눈에 보기
 
+[SASS-GUIDELIN](https://sass-guidelin.es/ko/)   
+[SASS(SCSS) 완전 정복!](https://heropy.blog/2018/01/31/sass/)   
+
+이 문서는 개인학습을 위해 위 페이지를 재구성한 문서입니다.
+
+
+***
+
 ## SASS 란?
 
 Sass(Syntactically Awesome Style Sheets)는 CSS의 단점을 보완하기 위해 만든 CSS 전처리기(CSS pre-processor)입니다.   
@@ -673,56 +681,271 @@ SCSS
 
 ***
 
-## 조건문
-SASS는 @if와 @else를 이용한 조건문을 제공합니다. CSS에서는 조건문이 크게 필요하지 않지만 사용하게 될 경우 다음 수직을 준수해야합니다.
-- 필요한 경우가 아니라면 `괄호( )` 없이
-- `@if` 앞에는 빈 라인
-- `여는 중괄호 {` 뒤에는 줄바꿈
-- `@else` 문은 이전의 `닫는 중괄호 }`와 같은 줄
-- 다음 줄이 `닫는 중괄호 }` 가 아닌 한 마지막 `닫는 중괄호 }` 뒤에는 빈 라인
+## 조건 / 반복문
+
+### if(함수)
+조건의 값에 따라 두 개의 표현식 중 하나만 반환합니다.
+삼항 연산자와 비슷하게 사용 가능합니다.
+
+조건의 값이 `true`면 `표현식1` 을,
+조건의 값이 `false`면 `포현식2` 를 실행합니다.
 ```
-@if $support-legacy {
+if(조건, 표현식1, 표현식2)
+```
+```
+SCSS:
+
+$width: 555px;
+div {
+    width: if($width > 300px, $width, 100px);
+}
+
+CSS:
+div {
+    width: 555px;
+}
+```
+### @if (지시어)
+`@if` 지시어는 조건에 따른 분기 처리가 가능합니다.   
+같이 사용가능한 지시어는 `@else`, `@else if` 가 있습니다.   
+추가 지시어를 통하여 보다 복잡한 조건문을 완성할 수 있습니다.   
+
+```
+// @if
+@if (조건) {
+    // ...
+}
+
+// @if @else
+@if (조건) {
+    // ...
+} @else {
+    // ...
+}
+
+// @if @else if @else
+@if (조건) {
+    // ...
+} @else if (조건) {
     // ...
 } @else {
     // ...
 }
 ```
-거짓을 사용할 때는 `false`나 `null` 대신 `not`을 사용하세요.
+조건이 참일 경우에는 `( )`를 생략할 수 있습니다.
 ```
-// Yep
+$bg: true;
+div {
+    @if $bg {
+        background: url("/image/a.png");
+    }
+}
+```
+조건에 논리 연산자인 `and`, `or`, `not`을 사용할 수 있습니다.   
+조건에서 거짓을 사용할 때는 `false`나 `null` 대신 `not`을 사용하는 것을 권장합니다. 
+```
+// not
 @if not index($list, $item) {
     // ...
 }
-// Nope
-@if index($list, $item) == null {
+
+// and
+// @return을 사용할 때는 조건문 블록 밖에서도 @return을 명시
+@function limitSize($size) {
+    @if $size >= 0 and $size <= 200px {
+        @return 200px;
+    }
+    @return 800px;
+}
+```
+
+## @for
+@for는 스타일을 반복 출력이 필요할 때 사용합니다.   
+`through`를 사용하는 형식과 `to`를 사용하는 형식 2가지가 있습니다.   
+두 형식은 종료 조건이 해석되는 방식이 다릅니다.
+```
+// through
+// 종료까지 반복
+@for $변수 from 시작 through 종료 {
+    // ...
+}
+
+// to
+// 종료 전까지 반복
+@for $변수 from 시작 to 종료 {
+
+}
+```
+```
+SCSS:
+// 1번부터 3번까지 3번 반복
+@for $i from 1 through 3 {
+    .through:nth-child(#{$i}) {
+        width: 20px * $i
+    }
+}
+
+// 1번부터 2번까지 2번 반복
+@for $i from 1 to 3 {
+    .to:ntn-child(#{$i}) {
+        width: 20px *i
+    }
+}
+
+CSS:
+.through:ntn-child(1) { width: 20px; }
+.through:ntn-child(2) { width: 40px; }
+.through:ntn-child(3) { width: 60px; }
+
+.to:ntn-child(1) { width: 20px }
+.to:ntn-child(2) { width: 40px }
+```
+
+일반적으로 `to`보다는 `throught`를 사용하는 것을 권장합니다.
+
+### @each
+`@each`는 `List`나 `Map`데이터를 반복할 때 사용합니다.
+```
+@each $변수 in 데이터 {
     // ...
 }
 ```
-조건에 따라 결과를 @return하는 조건문을 사용할 때는 조건문 블록 밖에서도 @return
+`@each`를 이용하여 List를 반복 출력하겠습니다. 
 ```
-// Yep
-@function dummy($condition) {
-    @if $condition {
-        @return true;
+SCSS:
+// List Data
+$fruits: (apple, orange, banana, mango);
+
+.fruits {
+    @each $fruit in $fruits {
+        li.#($fruit) {
+            background: url("/images/#{$fruit}.png");
+        }
     }
-    @return false;
 }
 
-// Nope
-@function dummy($condition) {
-    @if $condition {
-        @return true;
-    } @else {
-        @return false;
-    }
+CSS:
+.fruits li.apple {
+    backgrund: url("/images/apple.png");
+}
+.fruits li.orange {
+    backgrund: url("/images/orange.png");
+}
+.fruits li.banana {
+    backgrund: url("/images/banana.png");
+}
+.fruits li.mango {
+    backgrund: url("/images/mango.png");
 }
 ```
-***
-## 반복문
-### for
-### each
-### while
-### 작성 고려
+`index( )` 내장함수를 통해 index값을 불러올 수 있습니다.
+```
+SCSS:
+// List Data
+$fruits: (apple, orange, banana, mango);
+
+.fruits {
+    @each $fruit in $fruits {
+        $i: index($fruits, $fruit);
+        li:nth-child(#{$i}{
+            left: 50px * $i;
+        }
+    }
+}
+
+CSS:
+.fruits li:nth-child(1) {
+    left: 50px;
+}
+.fruits li:nth-child(2) {
+    left: 100px;
+}
+.fruits li:nth-child(3) {
+    left: 150px;
+}
+.fruits li:nth-child(4) {
+    left: 200px;
+}
+```
+동시에 여러 개의 List 데이터를 반복 처리 할 수 있습니다.   
+단, 각 데이터의 Length가 같아야 합니다.
+```
+SCSS:
+$apple: (apple, korea);
+$orange: (orange, china);
+$banana: (banana, japan);
+
+@each $fruit, $country in $apple, $orange, $banana {
+    .box-#{$fruit} {
+        background: url("/images/#{country}.png);
+    }
+}
+
+CSS:
+.box-apple {
+    background: url("/images/korea.png");
+}
+.box-orange {
+    background: url("/images/china.png");
+}
+.box-banana {
+    background: url("/images/japan.png");
+}
+```
+`Map`데이터를 반복할 경우에는 두개의 변수(`key`, `value`)가 필요합니다.
+```
+@each $key, $value in 데이터 {
+    // ...
+}
+```
+```
+SCSS:
+$fruits-data: (
+    apple: korea,
+    orange: china,
+    banana: japan
+);
+
+@each $fruit, $country in $fruits-data: {
+    .box-#{$fruit} {
+        background: url("/images/#{$country}.png")
+    }
+}
+
+CSS:
+.box-apple {
+    background: url("/image/korea.png");
+}
+.box-ornage {
+    background: url("/images/china.png");
+}
+.box-banana {
+    background: url("/images/japan.png");
+}
+```
+### @while
+`@while`은 조건이 `false`가 될때까지 반복합니다.
+```
+@while 조건 {
+    // ...
+}
+```
+```
+SCSS:
+$i: 6;
+
+@while $i > 0 {
+    .item-#{$i} {
+        width: 2px * $i;
+    }
+    $i: $i -2;
+}
+
+CSS:
+.item-6 { width: 12px; }
+.item-4 { width: 8px; }
+.item-2 { width: 4px; }
+```
 
 ***
 
@@ -741,4 +964,3 @@ SASS는 @if와 @else를 이용한 조건문을 제공합니다. CSS에서는 조
 [SASS-GUIDELIN](https://sass-guidelin.es/ko/)
 
 [SASS(SCSS) 완전 정복!](https://heropy.blog/2018/01/31/sass/)
-
